@@ -1,8 +1,9 @@
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
+const axios = require("axios");
 
-//generating keypair
+// Function to generate an RSA keypair
 function generateKeypair() {
   const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", {
     modulusLength: 2048,
@@ -25,6 +26,7 @@ function generateKeypair() {
   );
 }
 
+// Function to submit the public key to a server
 async function submitKey(url, password) {
   try {
     const publicKey = fs.readFileSync(
@@ -43,6 +45,7 @@ async function submitKey(url, password) {
   }
 }
 
+// Function to sign a message with the private key
 function signMessage(message) {
   try {
     const privateKey = fs.readFileSync(
@@ -62,33 +65,31 @@ function signMessage(message) {
   }
 }
 
-async function verifyMessage(message, signature) {
-    try {
-      const publicKey = fs.readFileSync(
-        path.join(__dirname, "public_key.pem"),
-        "utf-8"
-      );
-  
-      const verifier = crypto.createVerify("SHA256");
-      verifier.update(message);
-      verifier.end();
-      const isValid = verifier.verify(publicKey, signature, "hex");
-  
-      console.log("Message:", message);
-      console.log("Signature:", signature);
-      console.log("Is the signature valid?", isValid);
-    } catch (error) {
-      console.error("Failed to verify the message:", error.message);
-    }
-  }
+// Function to verify a signed message with the server
+async function verifyMessage(url, message, signature) {
+  try {
+    const response = await axios.post(`${url}/verify`, {
+      message,
+      signature,
+    });
 
-  function main() {
-    const args = process.argv.slice(2);
-    const command = args[0];
-  
-    if (command === "generate-keypair") {
+    console.log("Verification Result:", response.data);
+  } catch (error) {
+    console.error("Failed to verify the message:", error.message);
+  }
+}
+
+// Main function to handle CLI arguments
+function main() {
+  const args = process.argv.slice(2);
+  const command = args[0];
+
+  switch (command) {
+    case "generate-keypair":
       generateKeypair();
-    } else if (command === "submit-key") {
+      break;
+
+    case "submit-key":
       const url = args[args.indexOf("--url") + 1];
       const password = args[args.indexOf("--password") + 1];
       if (url && password) {
@@ -96,23 +97,34 @@ async function verifyMessage(message, signature) {
       } else {
         console.error("Missing required options --url and --password");
       }
-    } else if (command === "sign") {
+      break;
+
+    case "sign":
       const message = args[args.indexOf("--message") + 1];
       if (message) {
         signMessage(message);
       } else {
         console.error("Missing required option --message");
       }
-    } else if (command === "verify") {
-      const message = args[args.indexOf("--message") + 1];
+      break;
+
+    case "verify":
+      const verifyUrl = args[args.indexOf("--url") + 1];
+      const verifyMessageText = args[args.indexOf("--message") + 1];
       const signature = args[args.indexOf("--signature") + 1];
-      if (message && signature) {
-        verifyMessage(message, signature);
+      if (verifyUrl && verifyMessageText && signature) {
+        verifyMessage(verifyUrl, verifyMessageText, signature);
       } else {
-        console.error("Missing required options --message and --signature");
+        console.error(
+          "Missing required options --url, --message, and/or --signature"
+        );
       }
-    } else {
+      break;
+
+    default:
       console.error("Unknown command");
-    }
+      break;
   }
+}
+
 main();
