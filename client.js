@@ -25,12 +25,38 @@ function generateKeypair() {
   );
 }
 
+async function submitKey(url, password) {
+  try {
+    const publicKey = fs.readFileSync(
+      path.join(__dirname, "public_key.pem"),
+      "utf-8"
+    );
+
+    const response = await axios.post(`${url}/store-key`, {
+      password,
+      publicKey,
+    });
+
+    console.log("Server Response:", response.data);
+  } catch (error) {
+    console.error("Failed to submit the public key:", error.message);
+  }
+}
+
 function main() {
   const args = process.argv.slice(2);
   const command = args[0];
 
   if (command === "generate-keypair") {
     generateKeypair();
+  } else if (command === "submit-key") {
+    const url = args[args.indexOf("--url") + 1];
+    const password = args[args.indexOf("--password") + 1];
+    if (url && password) {
+      submitKey(url, password);
+    } else {
+      console.error("Missing required options --url and --password");
+    }
   } else {
     console.error("Unknown command");
   }
