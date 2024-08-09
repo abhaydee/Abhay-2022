@@ -20,6 +20,10 @@ This project helps to get a basic understanding of the RSA Key management system
 
    curl -X POST http://localhost:3000/set-password -H "Content-Type: application/json" -d '{"password": "yourpassword"}'
 
+   For now, avoid using backticks or excessive slashes 
+   alphanumeric charectors are supported
+
+
 5. Submit the generated public key to the server:
 
    node client.js submit-key --url http://localhost:3000 --password yourpassword
