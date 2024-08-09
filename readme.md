@@ -35,5 +35,5 @@ This project helps to get a basic understanding of the RSA Key management system
 
 7. To verify a signed message with the public key:
 
-   node client.js verify --message "your message" --signature "signature"
+   node client.js verify --url "http://localhost:3000" --message "yourmessage" --signature "yoursignature"
 
