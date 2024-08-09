@@ -29,6 +29,10 @@ function generateKeypair() {
 // Function to submit the public key to a server
 async function submitKey(url, password) {
   try {
+    if (!url || !password) {
+      throw new Error("URL and password are required");
+    }
+
     const publicKey = fs.readFileSync(
       path.join(__dirname, "public_key.pem"),
       "utf-8"
@@ -68,6 +72,10 @@ function signMessage(message) {
 // Function to verify a signed message with the server
 async function verifyMessage(url, message, signature) {
   try {
+    if (!url || !message || !signature) {
+      throw new Error("URL, message, and signature are required");
+    }
+
     const response = await axios.post(`${url}/verify`, {
       message,
       signature,
@@ -92,33 +100,19 @@ function main() {
     case "submit-key":
       const url = args[args.indexOf("--url") + 1];
       const password = args[args.indexOf("--password") + 1];
-      if (url && password) {
-        submitKey(url, password);
-      } else {
-        console.error("Missing required options --url and --password");
-      }
+      submitKey(url, password);
       break;
 
     case "sign":
       const message = args[args.indexOf("--message") + 1];
-      if (message) {
-        signMessage(message);
-      } else {
-        console.error("Missing required option --message");
-      }
+      signMessage(message);
       break;
 
     case "verify":
       const verifyUrl = args[args.indexOf("--url") + 1];
       const verifyMessageText = args[args.indexOf("--message") + 1];
       const signature = args[args.indexOf("--signature") + 1];
-      if (verifyUrl && verifyMessageText && signature) {
-        verifyMessage(verifyUrl, verifyMessageText, signature);
-      } else {
-        console.error(
-          "Missing required options --url, --message, and/or --signature"
-        );
-      }
+      verifyMessage(verifyUrl, verifyMessageText, signature);
       break;
 
     default:
